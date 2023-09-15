@@ -8,13 +8,11 @@ metafiles = 'metafiles'
 datasets = 'datasets'
 missing_recordings = []
 
-
 if not os.path.exists(metafiles):
     os.mkdir(metafiles)
 
 if not os.path.exists(datasets):
     os.mkdir(datasets)
-
 
 current_directory = os.getcwd()
 
@@ -29,19 +27,25 @@ for bird_name in bird_names:
 
     print(filename)
 
+    metafile = q.retrieve_meta(verbose=True)
+
+    en_name = metafile['recordings'][0]['en'].replace(" ", "")
+
+    filename = f'{metafiles}/{en_name}.json'
+
     if os.path.isfile(filename):
         print('Already existing')
         continue
     else:
         print(f'Downloading {bird_name}')
-    metafile = q.retrieve_meta(verbose=True)
 
     with open(filename, 'w') as json_file:
+        en_name = metafile['recordings'][0]['en']
         json.dump(metafile, json_file)
 
     if metafile['numRecordings'] != 0:
         # Get the first recording (you can customize this)
-        q.retrieve_recordings(multiprocess=True, nproc=10, attempts=10, outdir="datasets/")
+        q.retrieve_recordings(multiprocess=True, nproc=10, attempts=20, outdir="datasets/")
 
         print(f"Downloaded: {bird_name}")
     else:
