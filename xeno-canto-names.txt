@@ -14,7 +14,7 @@ Bobolink
 Indigo Bunting
 Lazuli Bunting
 Painted Bunting
-Cardinal
+Northern Cardinal
 Spotted Catbird
 Grey Catbird
 Yellow-breasted Chat
@@ -41,7 +41,7 @@ Olive-sided Flycatcher
 Scissor-tailed Flycatcher
 Vermilion Flycatcher
 Yellow-bellied Flycatcher
-Frigatebird
+Magnificent Frigatebird
 Northern Fulmar
 Gadwall
 American Goldfinch
@@ -51,7 +51,7 @@ Black-necked Grebe
 Horned Grebe
 Pied-billed Grebe
 Western Grebe
-Blue Grosbeak
+Passerina caerulea
 Evening Grosbeak
 Pine Grosbeak
 Rose-breasted Grosbeak
@@ -59,7 +59,7 @@ Pigeon Guillemot
 California Gull
 Glaucous-winged Gull
 Heermann's Gull
-Herring Gull
+European Herring Gull
 Ivory Gull
 Ring-billed Gull
 Slaty-backed Gull
@@ -88,26 +88,26 @@ Mallard
 Western Meadowlark
 Hooded Merganser
 Red-breasted Merganser
-Mockingbird
-Nighthawk
+Northern Mockingbird
+Common Nighthawk
 Clark's Nutcracker
 White-breasted Nuthatch
 Baltimore Oriole
-Hooded Oriole
+Oriolus xanthornus
 Orchard Oriole
 Scott's Oriole
 Ovenbird
 Brown Pelican
-White Pelican
+American White Pelican
 Western Wood Pewee
-Sayornis
+Say's Phoebe
 Buff-bellied Pipit
 Eastern Whip-poor-will
 Horned Puffin
 Northern Raven
 White-necked Raven
 American Redstart
-Geococcyx
+Greater Roadrunner
 Loggerhead Shrike
 Great Grey Shrike
 Baird's Sparrow
@@ -117,7 +117,7 @@ Chipping Sparrow
 Clay-colored Sparrow
 House Sparrow
 Field Sparrow
-Fox Sparrow
+Sooty Fox Sparrow
 Grasshopper Sparrow
 Harris's Sparrow
 Henslow's Sparrow
@@ -127,18 +127,18 @@ Nelson's sparrow
 Savannah Sparrow
 Seaside Sparrow
 Song Sparrow
-Tree Sparrow
+American Tree Sparrow
 Vesper Sparrow
 White-crowned Sparrow
 White-throated Kingfisher
 Cape starling
 Sand Martin
 Barn Swallow
-Cliff Swallow
+American Cliff Swallow
 Tree Swallow
 Scarlet Tanager
 Summer Tanager
-Arctic Tern
+Sterna paradisaea
 Black Tern
 Caspian Tern
 Common Tern
@@ -164,7 +164,7 @@ Cape May Warbler
 Cerulean Warbler
 Chestnut-sided Warbler
 Golden-winged Warbler
-Hooded Warbler
+Setophaga citrina
 Kentucky Warbler
 Magnolia Warbler
 Mourning Warbler
@@ -172,14 +172,14 @@ Myrtle Warbler
 Nashville Warbler
 Orange-crowned Warbler
 Palm Warbler
-Pine Warbler
+Setophaga pinus
 Prairie Warbler
 Prothonotary Warbler
 Swainson's warbler
 Tennessee Warbler
 Wilson's Warbler
 Worm-eating Warbler
-Yellow Warbler
+American Yellow Warbler
 Northern Waterthrush
 Louisiana Waterthrush
 Bohemian Waxwing

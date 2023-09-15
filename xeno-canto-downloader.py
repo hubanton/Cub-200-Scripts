@@ -5,9 +5,18 @@ from xenopy import Query
 input_file = 'xeno-canto-names.txt'
 missing_file = 'missing_birds.txt'
 metafiles = 'metafiles'
+datasets = 'datasets'
 missing_recordings = []
 
-os.mkdir(metafiles)
+
+if not os.path.exists(metafiles):
+    os.mkdir(metafiles)
+
+if not os.path.exists(datasets):
+    os.mkdir(datasets)
+
+
+current_directory = os.getcwd()
 
 with open(input_file, 'r') as birds:
     bird_names = birds.read().splitlines()
@@ -16,9 +25,18 @@ for bird_name in bird_names:
     # Search for recordings of the current bird
     q = Query(name=bird_name)
 
+    filename = f'{metafiles}/{bird_name}.json'
+
+    print(filename)
+
+    if os.path.isfile(filename):
+        print('Already existing')
+        continue
+    else:
+        print(f'Downloading {bird_name}')
     metafile = q.retrieve_meta(verbose=True)
 
-    with open(f'{metafiles}/{bird_name}.json', 'w') as json_file:
+    with open(filename, 'w') as json_file:
         json.dump(metafile, json_file)
 
     if metafile['numRecordings'] != 0:
