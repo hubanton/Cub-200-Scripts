@@ -1,3 +1,5 @@
 datasets/
 metafiles/
+birds_of_the_world_files/
 .idea/
+.env
