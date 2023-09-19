@@ -62,8 +62,8 @@ for bird in birdnames:
     category.click()
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-    sections = driver.find_elements(By.TAG_NAME, 'p')
-    introduction = sections[0].text
+    # sections = driver.find_elements(By.TAG_NAME, 'p')
+    # introduction = sections[0].text
 
     # Download as pdf
     pyautogui.hotkey('ctrl', 'p')
