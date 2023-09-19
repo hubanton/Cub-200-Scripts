@@ -1,9 +1,11 @@
 Black-footedAlbatross
 LaysanAlbatross
+SootyAlbatross
 Groove-billedAni
 CrestedAuklet
 LeastAuklet
 ParakeetAuklet
+RhinocerosAuklet
 Brewer'sBlackbird
 Red-wingedBlackbird
 RustyBlackbird

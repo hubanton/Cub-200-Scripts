@@ -9,12 +9,20 @@ import pyautogui
 import os
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 filepath = 'birds_of_the_world_files'
+search_names = 'xeno-canto-names.txt'
+not_found_names = 'world_not_found.txt'
+en_names = 'en-names.txt'
 
 birdnames = ['asdasddasdsadsadsa', 'Black-footed Albatross']
+
+with open(search_names, 'r') as birds:
+    search_bird_names = birds.read().splitlines()
+
+with open(en_names, 'r') as en_birds:
+    en_bird_names = en_birds.read().splitlines()
 
 not_found_birds = []
 
@@ -40,18 +48,18 @@ confirm_button.click()
 
 WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-for bird in birdnames:
+for search, savefile in zip(search_bird_names, en_bird_names):
     driver.get("https://birdsoftheworld.org/bow/home")
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
     inputField = driver.find_element(By.ID, "hero")
-    inputField.send_keys(bird)
+    inputField.send_keys(search)
 
     try:
         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Suggest-suggestion-0")))
     except TimeoutException:
-        print(f'Could not find bird: {bird}')
-        not_found_birds.append(bird)
+        print(f'Could not find bird: {search}')
+        not_found_birds.append(search)
         continue
 
     element.click()
@@ -70,8 +78,10 @@ for bird in birdnames:
     time.sleep(5)
     pyautogui.hotkey('enter')
     time.sleep(2)
-    pyautogui.typewrite(bird)
+    pyautogui.typewrite(savefile)
     pyautogui.hotkey('enter')
     time.sleep(5)
 
-print(not_found_birds)
+with open(not_found_names, 'w') as missing_birds:
+    missing_list = '\n'.join(not_found_birds)
+    missing_birds.write(missing_list)
