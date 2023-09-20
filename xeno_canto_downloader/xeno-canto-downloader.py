@@ -2,14 +2,22 @@ import json
 import os
 from xenopy import Query
 
-input_file = 'xeno-canto-names.txt'
-missing_file = 'missing_birds.txt'
-en_names = 'en_names.txt'
 metafiles = 'metafiles'
 datasets = 'datasets'
+
+en_names_file = '../shared/en_names.txt'
+bird_names_file = '../shared/xeno-canto-names.txt'
+
+missing_recordings_file = 'missing_birds.txt'
+ambiguous_names_file = 'ambiguous_names.txt'
+
 missing_recordings = []
-ambiguous_recordings = []
-en_list = []
+ambiguous_bird_names = []
+english_bird_names = []
+
+def write_to_file(file_path, data):
+    with open(file_path, 'w') as f:
+        f.write('\n'.join(data))
 
 if not os.path.exists(metafiles):
     os.mkdir(metafiles)
@@ -17,50 +25,45 @@ if not os.path.exists(metafiles):
 if not os.path.exists(datasets):
     os.mkdir(datasets)
 
-current_directory = os.getcwd()
 
-with open(input_file, 'r') as birds:
+with open(bird_names_file, 'r') as birds:
     bird_names = birds.read().splitlines()
 
 for bird_name in bird_names:
-    # Search for recordings of the current bird
+
     q = Query(name=bird_name)
 
     metafile = q.retrieve_meta(verbose=True)
-
     numRecordings = metafile['numRecordings']
 
-if numRecordings < 5:
-    print(f'Query has too little recordings: {bird_name}')
-    missing_recordings.append(bird_name)
-    continue
+    if numRecordings < 5:
+        print(f'Query has too little recordings: {bird_name}')
+        missing_recordings.append(bird_name)
+        continue
 
     if metafile['numSpecies'] > 1:
         print(f'Query is too ambiguous: {bird_name}')
-        ambiguous_recordings.append(bird_name)
+        ambiguous_bird_names.append(bird_name)
         continue
 
-en_name = metafile['recordings'][0]['en'].replace(" ", "")
-en_list.append(en_name)
+    en_name = metafile['recordings'][0]['en'].replace(" ", "")
+    en_list.append(en_name)
 
-filename = f'{metafiles}/{en_name}.json'
+    filename = f'{metafiles}/{en_name}.json'
 
-if os.path.isfile(filename):
-    print(f'Already existing {filename}')
-    continue
+    if os.path.isfile(filename):
+        print(f'Already existing {filename}')
+        continue
 
-with open(filename, 'w') as json_file:
-    en_name = metafile['recordings'][0]['en']
-    json.dump(metafile, json_file)
+    with open(filename, 'w') as json_file:
+        en_name = metafile['recordings'][0]['en']
+        json.dump(metafile, json_file)
+        english_bird_names.append(en_name)
 
-q.retrieve_recordings(multiprocess=True, nproc=10, attempts=20, outdir="datasets/")
+    q.retrieve_recordings(multiprocess=True, nproc=10, attempts=20, outdir="datasets/")
 
-print("Download completed.")
+    print("Download completed.")
 
-with open(missing_file, 'w') as missing_birds:
-    missing_list = '\n'.join(missing_recordings)
-    missing_birds.write(missing_list)
-
-with open(en_names, 'w') as en_names_file:
-    en_names_list = '\n'.join(en_list)
-    en_names_file.write(en_names_list)
+write_to_file(missing_recordings_file, missing_recordings)
+write_to_file(en_names_file, english_bird_names)
+write_to_file(ambiguous_names_file, ambiguous_bird_names)

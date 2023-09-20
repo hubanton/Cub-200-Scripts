@@ -11,33 +11,36 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-filepath = 'birds_of_the_world_files'
-search_names = 'botw-missing.txt'
-not_found_names = 'world_not_found.txt'
-en_names = 'en_names.txt'
 
-with open(search_names, 'r') as birds:
-    search_bird_names = birds.read().splitlines()
+english_names_file = '../shared/en_names.txt'
+bird_names_file = '../shared/botw-names.txt'
 
-with open(en_names, 'r') as en_birds:
-    en_bird_names = en_birds.read().splitlines()
+not_found_names = 'not-found-names.txt'
+
+def load_names(path):
+    with open(path, 'r') as f:
+        return f.read().splitlines()
+
+bird_names = load_names(bird_names_file)
+english_names_file = load_names(english_names_file)
 
 not_found_birds = []
+
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
 
 driver = webdriver.Chrome(options=chrome_options)
-
 driver.get("https://birdsoftheworld.org/bow/home")
 
 login = driver.find_element(By.LINK_TEXT, 'Sign In')
-
 login.click()
+
 WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
 username = driver.find_element(By.ID, 'input-user-name')
 username.send_keys(os.getenv('BENUTZER'))
+
 password = driver.find_element(By.ID, 'input-password')
 password.send_keys(os.getenv('PASSWORT'))
 
@@ -46,11 +49,7 @@ confirm_button.click()
 
 WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-offset = len(en_bird_names) - len(search_bird_names)
-
-assert len(en_bird_names[offset:]) == len(search_bird_names)
-
-for search, savefile in zip(search_bird_names, en_bird_names[offset:]):
+for bird_name, english_name in zip(bird_names, english_names_file):
     driver.get("https://birdsoftheworld.org/bow/home")
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
