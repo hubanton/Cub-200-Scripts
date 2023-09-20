@@ -1,5 +1,4 @@
-datasets/
-metafiles/
-birds_of_the_world_files/
+botw_webscrapper/.env
+xeno_canto_data/
+botw_data/
 .idea/
-.env

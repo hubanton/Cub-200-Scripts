@@ -12,11 +12,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 filepath = 'birds_of_the_world_files'
-search_names = 'xeno-canto-names.txt'
+search_names = 'botw-missing.txt'
 not_found_names = 'world_not_found.txt'
-en_names = 'en-names.txt'
-
-birdnames = ['asdasddasdsadsadsa', 'Black-footed Albatross']
+en_names = 'en_names.txt'
 
 with open(search_names, 'r') as birds:
     search_bird_names = birds.read().splitlines()
@@ -48,7 +46,11 @@ confirm_button.click()
 
 WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-for search, savefile in zip(search_bird_names, en_bird_names):
+offset = len(en_bird_names) - len(search_bird_names)
+
+assert len(en_bird_names[offset:]) == len(search_bird_names)
+
+for search, savefile in zip(search_bird_names, en_bird_names[offset:]):
     driver.get("https://birdsoftheworld.org/bow/home")
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
