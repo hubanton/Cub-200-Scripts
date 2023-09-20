@@ -21,11 +21,11 @@ def write_to_file(file_path, data):
         f.write('\n'.join(data))
 
 
-if not os.path.exists(metafiles):
+try:
     os.mkdir(metafiles)
-
-if not os.path.exists(datasets):
     os.mkdir(datasets)
+except OSError:
+    print('Directories already exist, continuing...')
 
 with open(bird_names_file, 'r') as birds:
     bird_names = birds.read().splitlines()
@@ -42,7 +42,7 @@ for bird_name in bird_names:
         missing_recordings.append(bird_name)
         continue
 
-    if metafile['numSpecies'] > 1:
+    if int(metafile['numSpecies']) > 1:
         print(f'Query is too ambiguous: {bird_name}')
         ambiguous_bird_names.append(bird_name)
         continue
