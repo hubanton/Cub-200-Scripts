@@ -11,21 +11,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 english_names_file = '../shared/en_names.txt'
 bird_names_file = '../shared/botw-names.txt'
 
 not_found_names = 'not-found-names.txt'
 
+
 def load_names(path):
     with open(path, 'r') as f:
         return f.read().splitlines()
+
 
 bird_names = load_names(bird_names_file)
 english_names_file = load_names(english_names_file)
 
 not_found_birds = []
-
 
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
@@ -54,13 +54,13 @@ for bird_name, english_name in zip(bird_names, english_names_file):
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
     inputField = driver.find_element(By.ID, "hero")
-    inputField.send_keys(search)
+    inputField.send_keys(bird_name)
 
     try:
         element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "Suggest-suggestion-0")))
     except TimeoutException:
-        print(f'Could not find bird: {search}')
-        not_found_birds.append(search)
+        print(f'Could not find bird: {bird_name}')
+        not_found_birds.append(bird_name)
         continue
 
     element.click()
@@ -79,7 +79,7 @@ for bird_name, english_name in zip(bird_names, english_names_file):
     time.sleep(5)
     pyautogui.hotkey('enter')
     time.sleep(2)
-    pyautogui.typewrite(savefile)
+    pyautogui.typewrite(english_name)
     pyautogui.hotkey('enter')
     time.sleep(5)
 

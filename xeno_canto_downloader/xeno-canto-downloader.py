@@ -15,16 +15,17 @@ missing_recordings = []
 ambiguous_bird_names = []
 english_bird_names = []
 
+
 def write_to_file(file_path, data):
     with open(file_path, 'w') as f:
         f.write('\n'.join(data))
+
 
 if not os.path.exists(metafiles):
     os.mkdir(metafiles)
 
 if not os.path.exists(datasets):
     os.mkdir(datasets)
-
 
 with open(bird_names_file, 'r') as birds:
     bird_names = birds.read().splitlines()
@@ -47,7 +48,7 @@ for bird_name in bird_names:
         continue
 
     en_name = metafile['recordings'][0]['en'].replace(" ", "")
-    en_list.append(en_name)
+    english_bird_names.append(en_name)
 
     filename = f'{metafiles}/{en_name}.json'
 
@@ -56,9 +57,7 @@ for bird_name in bird_names:
         continue
 
     with open(filename, 'w') as json_file:
-        en_name = metafile['recordings'][0]['en']
         json.dump(metafile, json_file)
-        english_bird_names.append(en_name)
 
     q.retrieve_recordings(multiprocess=True, nproc=10, attempts=20, outdir="datasets/")
 
