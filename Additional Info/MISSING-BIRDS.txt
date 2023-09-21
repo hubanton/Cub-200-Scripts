@@ -1,6 +1,0 @@
-3. Sooty_Albatross | SootyAlbatross -> 0
-8. Rhinoceros_Auklet | RhinocerosAuklet -> 0
-94: Horned Puffin -> 1
-98: Ivory Gull -> 2
-150: Red-facedCormorant -> 4
-152: Red-leggedKittiwake -> 4
