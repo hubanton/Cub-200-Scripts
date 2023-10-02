@@ -32,7 +32,7 @@ with open(bird_names_file, 'r') as birds:
 
 for bird_name in bird_names:
 
-    q = Query(name=bird_name)
+    q = Query(name=bird_name.replace('_', ' '))
 
     metafile = q.retrieve_meta(verbose=True)
     numRecordings = metafile['numRecordings']
@@ -46,6 +46,8 @@ for bird_name in bird_names:
         print(f'Query is too ambiguous: {bird_name}')
         ambiguous_bird_names.append(bird_name)
         continue
+
+    continue
 
     en_name = metafile['recordings'][0]['en'].replace(" ", "")
     english_bird_names.append(en_name)

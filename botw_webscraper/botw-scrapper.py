@@ -22,7 +22,7 @@ if not os.path.exists(textfiles):
     os.mkdir(textfiles)
 
 not_found_names = 'not-found-names.txt'
-latin_names_file = 'latin_names.txt'
+latin_names_file = 'botw_names.txt'
 
 
 def load_names(path):
