@@ -117,7 +117,7 @@ ChippingSparrow
 Clay-coloredSparrow
 HouseSparrow
 FieldSparrow
-SootyFoxSparrow
+RedFoxSparrow
 GrasshopperSparrow
 Harris'sSparrow
 Henslow'sSparrow

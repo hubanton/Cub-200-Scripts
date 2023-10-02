@@ -22,7 +22,7 @@ if not os.path.exists(textfiles):
     os.mkdir(textfiles)
 
 not_found_names = 'not-found-names.txt'
-
+latin_names_file = 'latin_names.txt'
 
 
 def load_names(path):
@@ -34,8 +34,10 @@ birds = load_names(bird_names_file)
 en_birds = load_names(english_names_file)
 
 
-def scrape_botw(bird_names, english_names, download_pdf=True, download_section=True):
+def scrape_botw(bird_names, english_names, download_pdf=True, download_section=True, download_latin_name=False):
     not_found_birds = []
+
+    latin_names = []
 
     chrome_options = Options()
     chrome_options.add_experimental_option("detach", True)
@@ -77,13 +79,21 @@ def scrape_botw(bird_names, english_names, download_pdf=True, download_section=T
 
         WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-        category = driver.find_element(By.LINK_TEXT, link_text)
-        category.click()
-        WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
+        # for the latin names
+        section = driver.find_element(By.CLASS_NAME, 'Heading-sub')
+        latin_name = section.text.split('\n')[0]
+        latin_name = latin_name.replace(' ', '_')
+        print(latin_name)
+        latin_names.append(latin_name)
+
+        if download_section or download_pdf:
+            category = driver.find_element(By.LINK_TEXT, link_text)
+            category.click()
+            WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
         if download_section:
             sections = driver.find_elements(By.CLASS_NAME, 'GridFlex-cell')
-            with open(textfiles + '/' + english_name + '.txt', 'w') as bird_info:
+            with open(textfiles + '/' + latin_name + '.txt', 'w') as bird_info:
                 text = sections[3].text
                 if not text.startswith(link_text):
                     text = text.split(link_text)[1]
@@ -101,13 +111,18 @@ def scrape_botw(bird_names, english_names, download_pdf=True, download_section=T
             time.sleep(5)
             pyautogui.hotkey('enter')
             time.sleep(2)
-            pyautogui.typewrite(english_name)
+            pyautogui.typewrite(latin_name)
             pyautogui.hotkey('enter')
             time.sleep(5)
 
-    with open(not_found_names, 'w') as missing_birds:
-        missing_list = '\n'.join(not_found_birds)
-        missing_birds.write(missing_list)
+    with open(not_found_names, 'w') as f:
+        res = '\n'.join(not_found_birds)
+        f.write(res)
+
+    if download_latin_name:
+        with open(latin_names_file, 'w') as f:
+            res = '\n'.join(latin_names)
+            f.write(res)
 
 
-scrape_botw(birds, en_birds, download_pdf=False, download_section=True)
+scrape_botw(birds, en_birds, download_pdf=False, download_section=False, download_latin_name=True)
