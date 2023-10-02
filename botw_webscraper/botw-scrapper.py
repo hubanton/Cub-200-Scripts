@@ -14,7 +14,7 @@ load_dotenv()
 link_text = 'Sounds and Vocal Behavior'
 
 english_names_file = '../shared/en_names.txt'
-bird_names_file = '../shared/botw-names.txt'
+bird_names_file = '../shared/latin-names.txt'
 
 textfiles = 'textfiles'
 
