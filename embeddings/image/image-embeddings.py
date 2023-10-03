@@ -1,20 +1,20 @@
-from transformers import AutoImageProcessor, AutoModel
-from tqdm.contrib import tzip
-from PIL import Image
-import tensorrt
-import pandas as pd
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
 import torch
 import transformers
+from PIL import Image
+from tqdm.contrib import tzip
+from transformers import AutoImageProcessor, AutoModel
 
 transformers.logging.set_verbosity_error()
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-cub_200_names_file = '../shared/cub-200-folder-names.txt'
-latin_names_file = '../shared/latin_names.txt'
-root_directory = '../CUB_200_2011/images'
+cub_200_names_file = '../../shared/cub-200-folder-names.txt'
+latin_names_file = '../../shared/latin_names.txt'
+root_directory = '../../CUB_200_2011/images'
 
 used_models = ['google/vit-base-patch16-224-in21k', 'microsoft/resnet-34', 'microsoft/focalnet-tiny']
 
@@ -25,15 +25,11 @@ def readfile(path):
 
 
 def store_as_csv(embedding_dict, path):
-    df = pd.DataFrame.from_dict(embedding_dict, orient='index')
+    columns = [f'Neuron_{x + 1}' for x in range(len(embedding_dict.values()[0]))]
+    df = pd.DataFrame.from_dict(embedding_dict, orient='index', columns=columns)
 
     df.reset_index(inplace=True)
     df.rename(columns={'index': 'Name (Latin)'}, inplace=True)
-
-    new_column_names = {'Name (Latin)': 'Name (Latin)'}
-    for i in range(len(df.columns) - 1):
-        new_column_names[i] = f'Neuron {i + 1}'
-    df.rename(columns=new_column_names, inplace=True)
 
     df.to_csv(path, index=False)
 
@@ -49,7 +45,7 @@ def get_mean_embeddings(model, preprocessor, root_dir, folder_names, save_names,
     mean_embeddings = {}
 
     for folder, save_name in tzip(folder_names, save_names):
-        subdirectory = root_dir + '/' + folder
+        subdirectory = os.path.join(root_dir, folder)
         class_files = os.listdir(subdirectory)
 
         class_embeddings = []

@@ -1,6 +1,9 @@
 import json
 import os
+
 from xenopy import Query
+
+max_duration = 60 * 15  # 15 Minutes
 
 metafiles = 'metafiles'
 datasets = 'datasets'
@@ -32,13 +35,13 @@ with open(bird_names_file, 'r') as birds:
 
 for bird_name in bird_names:
 
-    q = Query(name=bird_name.replace('_', ' '))
+    q = Query(name=bird_name, len_lt=max_duration)
 
     metafile = q.retrieve_meta(verbose=True)
     numRecordings = metafile['numRecordings']
 
-    if numRecordings < 5:
-        print(f'Query has too little recordings: {bird_name}')
+    if numRecordings == 0:
+        print(f'Query has no little recordings: {bird_name}')
         missing_recordings.append(bird_name)
         continue
 
@@ -46,8 +49,6 @@ for bird_name in bird_names:
         print(f'Query is too ambiguous: {bird_name}')
         ambiguous_bird_names.append(bird_name)
         continue
-
-    continue
 
     en_name = metafile['recordings'][0]['en'].replace(" ", "")
     english_bird_names.append(en_name)
