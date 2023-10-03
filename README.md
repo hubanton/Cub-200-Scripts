@@ -8,8 +8,9 @@ exist depending on the used API:
 
 1. `xeno-canto-names.txt`: These are the names used for downloading from xeno-canto. Since the API does a partial
    matching on names, some birds are referenced by their scientific name
-2. `latin-names.txt`: Scientific names of birds, is used for botw-scraper and for general naming.
-3. `CUB-200-names.txt`: The class labels as found in the CUB-200 dataset
+3. `botw-names.txt`: Names used for webscrapper, only slight differences to xeno-canto
+3. `latin-names.txt`: Scientific names of birds, is used for botw-scraper and for general naming [These do not work with the scrapper, xeno due to naming differences, partial name matching]
+4. `CUB-200-names.txt`: The class labels as found in the CUB-200 dataset
 
 ## Additional Info
 
