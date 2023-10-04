@@ -23,7 +23,7 @@ def readfile(path):
 def store_as_csv(embedding_dict, path):
     embedding_size = len(list(embedding_dict.values())[0])
     columns = [f'Neuron_{x + 1}' for x in range(embedding_size)]
-    print(embedding_dict)
+
     df = pd.DataFrame.from_dict(embedding_dict, orient='index', columns=columns)
 
     df.reset_index(inplace=True)
@@ -47,15 +47,14 @@ def get_audio_embeddings(model, feature_extractor, root_dir: str, folder_names):
 
     embeddings_collection = {}
 
-    for folder_name in tqdm(folder_names, position=0):
+    for folder_name in tqdm(folder_names):
         target_subdirectory = os.path.join(target_directory, folder_name)
         os.makedirs(target_subdirectory, exist_ok=True)
 
         source_directory = os.path.join(root_dir, folder_name)
         audio_filenames = os.listdir(source_directory)
 
-        for audio_filename in audio_filenames:
-            print(audio_filename, folder_name)
+        for audio_filename in tqdm(audio_filenames):
             base_filename = os.path.splitext(audio_filename)[0]
             target_file_path = os.path.join(target_subdirectory, base_filename + '.npy')
             file_path = os.path.join(source_directory, audio_filename)
@@ -74,7 +73,7 @@ def get_audio_embeddings(model, feature_extractor, root_dir: str, folder_names):
     return embeddings_collection
 
 
-latin_names = readfile(latin_names_file)[1:2]
+latin_names = readfile(latin_names_file)
 
 model_name = "MIT/ast-finetuned-audioset-10-10-0.4593"
 ast_model = AutoModelForAudioClassification.from_pretrained(model_name, output_hidden_states=True).to(device)
