@@ -77,7 +77,7 @@ latin_names = readfile(latin_names_file)
 
 model_name = "MIT/ast-finetuned-audioset-10-10-0.4593"
 ast_model = AutoModelForAudioClassification.from_pretrained(model_name, output_hidden_states=True).to(device)
-ast_feature_extractor = ASTFeatureExtractor()
+ast_feature_extractor = ASTFeatureExtractor.from_pretrained(model_name)
 
 class_reps = get_audio_embeddings(ast_model, ast_feature_extractor, root_directory, latin_names)
 
