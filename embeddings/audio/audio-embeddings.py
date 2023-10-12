@@ -9,7 +9,10 @@ from tqdm import tqdm
 from transformers import AutoModelForAudioClassification, ASTFeatureExtractor
 
 transformers.logging.set_verbosity_error()
+
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+MODEL_NAME = "MIT/ast-finetuned-audioset-10-10-0.4593"
 
 latin_names_file = '../../shared/latin_names.txt'
 root_directory = '../../xeno_canto_data/Recordings'
@@ -75,9 +78,8 @@ def get_audio_embeddings(model, feature_extractor, root_dir: str, folder_names):
 
 latin_names = readfile(latin_names_file)
 
-model_name = "MIT/ast-finetuned-audioset-10-10-0.4593"
-ast_model = AutoModelForAudioClassification.from_pretrained(model_name, output_hidden_states=True).to(device)
-ast_feature_extractor = ASTFeatureExtractor.from_pretrained(model_name)
+ast_model = AutoModelForAudioClassification.from_pretrained(MODEL_NAME, output_hidden_states=True).to(device)
+ast_feature_extractor = ASTFeatureExtractor.from_pretrained(MODEL_NAME)
 
 class_reps = get_audio_embeddings(ast_model, ast_feature_extractor, root_directory, latin_names)
 
