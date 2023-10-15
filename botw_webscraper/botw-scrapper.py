@@ -4,15 +4,16 @@ import time
 import pyautogui
 from dotenv import load_dotenv
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from tqdm.contrib import tzip
 
 load_dotenv()
 
-LINK_TEXTS = ['Sounds and Vocal Behavior', 'Diet and Foraging', 'Conservation and Management', 'Habitat', 'Systematics']
+LINK_TEXTS = ['Conservation and Management', 'Sounds and Vocal Behavior', 'Diet and Foraging', 'Habitat', 'Systematics']
 ROOT_URL = "https://birdsoftheworld.org/bow/home"
 
 english_names_file = '../shared/en_names.txt'
@@ -20,6 +21,7 @@ bird_names_file = '../shared/botw_names.txt'
 
 not_found_names = 'not-found-names.txt'
 latin_names_file = 'latin_names.txt'
+no_such_element_file = 'no_such_element.txt'
 
 
 def load_names(path):
@@ -54,7 +56,7 @@ def scrape_botw(bird_names, english_names, link_texts):
 
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-    for bird_name, english_name in zip(bird_names, english_names):
+    for bird_name, english_name in tzip(bird_names, english_names):
         driver.get(ROOT_URL)
         WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
@@ -80,17 +82,30 @@ def scrape_botw(bird_names, english_names, link_texts):
             f.write(latin_name)
 
         for link_text in link_texts:
-            category = driver.find_element(By.LINK_TEXT, link_text)
-            category.click()
-            WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
+            try:
+                category = driver.find_element(By.LINK_TEXT, link_text)
+                category.click()
+                WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-            pyautogui.hotkey('ctrl', 'p')
-            time.sleep(5)
-            pyautogui.hotkey('enter')
-            time.sleep(2)
-            pyautogui.typewrite(f"{latin_name}_{link_text}")
-            pyautogui.hotkey('enter')
-            time.sleep(5)
+                pyautogui.hotkey('ctrl', 'p')
+                time.sleep(5)
+                pyautogui.hotkey('enter')
+                time.sleep(2)
+                pyautogui.typewrite(f"{latin_name}-{link_text}")
+                pyautogui.hotkey('enter')
+                time.sleep(2)
+            except NoSuchElementException:
+                print(f'{bird_name} has no {link_text} Page, downloading standalone')
+                with open(no_such_element_file, 'a') as f:
+                    f.write(f'{latin_name}\n')
+                    pyautogui.hotkey('ctrl', 'p')
+                    time.sleep(5)
+                    pyautogui.hotkey('enter')
+                    time.sleep(2)
+                    pyautogui.typewrite(f"{latin_name}-STANDALONE")
+                    pyautogui.hotkey('enter')
+                    time.sleep(2)
+                    break
 
 
 scrape_botw(birds, en_birds, LINK_TEXTS)

@@ -4,11 +4,12 @@ import time
 import requests
 from dotenv import load_dotenv
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from tqdm.contrib import tzip
 
 load_dotenv()
 
@@ -17,36 +18,30 @@ ROOT_URL = "https://search.macaulaylibrary.org/catalog?sort=rating_rank_desc"
 latin_names_file = '../shared/latin_names.txt'
 bird_names_file = '../shared/botw_names.txt'
 
+already_complete_file = 'already_complete.txt'
 not_found_names = 'not-found-names.txt'
 
 ROOT_DIR = 'downloaded_data'
 
-NUM_DATA = 100
+NUM_DATA = 150
+LOAD_TIME = 20
 
 
 def load_names(path):
-    with open(path, 'r') as f:
+    with open(path, 'w+') as f:
         return f.read().splitlines()
 
 
 birds = load_names(bird_names_file)
 latin_birds = load_names(latin_names_file)
+complete_birds = load_names(already_complete_file)
 
 
-def scrape_data(bird_names, latin_names, media_types=None):
-    if media_types is None:
-        media_types = ['photo']
-
-    os.makedirs(ROOT_DIR, exist_ok=True)
-
-    chrome_options = Options()
-    chrome_options.add_experimental_option("detach", True)
-
-    driver = webdriver.Chrome(options=chrome_options)
+def login(driver):
     driver.get(ROOT_URL)
 
-    login = driver.find_element(By.LINK_TEXT, 'Sign in')
-    login.click()
+    login_button = driver.find_element(By.LINK_TEXT, 'Sign in')
+    login_button.click()
 
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
@@ -61,63 +56,146 @@ def scrape_data(bird_names, latin_names, media_types=None):
 
     WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-    for bird_name, latin_name in zip(bird_names, latin_names):
-        bird_folder_path = os.path.join(ROOT_DIR, latin_name)
+
+def download_images(driver, latin_name, bird_folder_path):
+    tag_name = 'img'
+
+    elements = driver.find_elements(By.TAG_NAME, tag_name)
+
+    if len(elements) == 0:
+        print(f'\nRate-limited - {latin_name}, skipping...')
+        return
+
+    while len(elements) < NUM_DATA:
+        try:
+            rate_limit_placeholders = driver.find_elements(By.CLASS_NAME, 'ResultsGallery-placeholder')
+            if len(rate_limit_placeholders) > 0:
+                print(f'Rate limited {latin_name}')
+                break
+        except NoSuchElementException:
+            pass
+
+        try:
+            more_button = WebDriverWait(driver, LOAD_TIME).until(
+                EC.presence_of_element_located((By.XPATH, "//button[contains(text(),'More results')]")))
+            more_button.click()
+        except TimeoutException:
+            break
+
+        elements = driver.find_elements(By.TAG_NAME, tag_name)
+
+    time.sleep(4)
+    elements = driver.find_elements(By.TAG_NAME, tag_name)
+
+    print(f'Maximum amount of entries found ({latin_name}): {len(elements)}')
+    if len(elements) > 0:
+        with open(already_complete_file, 'a') as f:
+            f.write(latin_name + '\n')
+
+    for idx, element in enumerate(elements[:NUM_DATA]):
+        url = element.get_attribute('src')
+
+        response = requests.get(url)
+        if response.status_code == 200:
+            save_directory = os.path.join(bird_folder_path, str(idx + 1))
+            with open(f'{save_directory}.jpg', 'wb') as file:
+                file.write(response.content)
+
+
+def download_audios(driver, latin_name, bird_folder_path):
+    tag_name = 'audio'
+    element_identifier = 'ResultsGallery-playButton'
+
+    elements = driver.find_elements(By.CLASS_NAME, element_identifier)
+
+    while len(elements) < NUM_DATA:
+        try:
+            more_button = WebDriverWait(driver, LOAD_TIME).until(
+                EC.presence_of_element_located((By.XPATH, "//button[contains(text(),'More results')]")))
+            more_button.click()
+        except TimeoutException:
+            break
+
+        elements = driver.find_elements(By.CLASS_NAME, element_identifier)
+
+    time.sleep(3)
+    elements = driver.find_elements(By.CLASS_NAME, element_identifier)
+
+    for idx, element in enumerate(elements[:NUM_DATA]):
+        element.click()
+        element = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, tag_name)))
+        time.sleep(0.3)
+        try:
+            url = element.get_attribute('src')
+
+            response = requests.get(url)
+            if response.status_code == 200:
+                save_directory = os.path.join(bird_folder_path, str(idx + 1))
+                with open(f'{save_directory}.mp3', 'wb') as file:
+                    file.write(response.content)
+            else:
+                print(f'\nRate limited - {latin_name}, skipping...')
+                return
+        except StaleElementReferenceException:
+            print(f'\nElement turned stale {latin_name}')
+        close_button = driver.find_element(By.CLASS_NAME, 'Lightbox-close')
+        close_button.click()
+
+    print(f'Maximum amount of entries found ({latin_name}): {len(elements)}')
+    if len(elements) > 0:
+        with open(already_complete_file, 'a') as f:
+            f.write(latin_name + '\n')
+
+
+def scrape_data(bird_names, latin_names, complete_list, media_type='photo'):
+    os.makedirs(ROOT_DIR, exist_ok=True)
+
+    chrome_options = Options()
+    chrome_options.add_argument("--mute-audio")
+    chrome_options.add_experimental_option("detach", True)
+
+    driver = webdriver.Chrome(options=chrome_options)
+
+    login(driver)
+
+    for bird_name, latin_name in tzip(bird_names, latin_names):
+        media_folder_path = os.path.join(ROOT_DIR, 'Audios' if media_type == 'audio' else 'Images')
+        os.makedirs(media_folder_path, exist_ok=True)
+
+        bird_folder_path = os.path.join(media_folder_path, latin_name)
         os.makedirs(bird_folder_path, exist_ok=True)
 
-        for media_type in media_types:
-            media_folder_path = os.path.join(bird_folder_path, media_type)
-            os.makedirs(media_folder_path, exist_ok=True)
+        already_downloaded_num = len(os.listdir(bird_folder_path))
 
-            driver.get(ROOT_URL + '&mediaType=' + media_type)
-            WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
+        if already_downloaded_num == NUM_DATA or latin_name in complete_list:
+            print(f'\nAlready downloaded {media_type} - {latin_name}, skipping...')
+            continue
 
-            input_field = driver.find_element(By.ID, "taxonFinder")
-            input_field.send_keys(bird_name)
+        driver.get(ROOT_URL + '&mediaType=' + media_type)
+        WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-            try:
-                element = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "Suggest-suggestion-0")))
-            except TimeoutException:
-                print(f'Could not find bird: {bird_name}')
-                with open(not_found_names, 'a') as f:
-                    f.write(bird_name)
-                continue
+        input_field = driver.find_element(By.ID, "taxonFinder")
+        input_field.send_keys(bird_name)
 
-            element.click()
+        try:
+            element = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.ID, "Suggest-suggestion-0")))
+        except TimeoutException:
+            print(f'Could not find bird: {bird_name}')
+            with open(not_found_names, 'a') as f:
+                f.write(bird_name)
+            continue
 
-            WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
+        element.click()
 
-            tag_name = ''
+        WebDriverWait(driver, 10).until(EC.url_changes(driver.title))
 
-            if media_type == 'photo':
-                tag_name = 'img'
-
-            elements = driver.find_elements(By.TAG_NAME, tag_name)
-
-            while len(elements) < NUM_DATA:
-                try:
-                    more_button = WebDriverWait(driver, 20).until(
-                        EC.presence_of_element_located((By.XPATH, "//button[contains(text(),'More results')]")))
-                    more_button.click()
-
-                except TimeoutException:
-                    print('Cant find more data ' + bird_name)
-                    break
-
-                elements = driver.find_elements(By.TAG_NAME, tag_name)
-
-            time.sleep(3)
-            elements = driver.find_elements(By.TAG_NAME, tag_name)
-
-            for idx, element in enumerate(elements[:NUM_DATA]):
-                url = element.get_attribute('src')
-
-                response = requests.get(url)
-                if response.status_code == 200:
-                    save_directory = os.path.join(media_folder_path, f'{idx}_{element.get_attribute("alt")}')
-                    with open(f'{save_directory}.jpg', 'wb') as file:
-                        file.write(response.content)
+        if media_type == 'photo':
+            download_images(driver, latin_name, bird_folder_path)
+        elif media_type == 'audio':
+            download_audios(driver, latin_name, bird_folder_path)
 
 
-scrape_data(birds, latin_birds)
+media = input('Please specify the media type (audio or photo): ')
+
+scrape_data(birds, latin_birds, complete_birds, media_type=media)
