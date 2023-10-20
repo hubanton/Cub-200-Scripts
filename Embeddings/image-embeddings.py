@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import pandas as pd
 import torch
 import transformers
@@ -12,11 +11,16 @@ transformers.logging.set_verbosity_error()
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-cub_200_names_file = '../../shared/cub-200-folder-names.txt'
-latin_names_file = '../../shared/latin_names.txt'
-root_directory = '../../CUB_200_2011/images'
+cub_200_names_file = '../shared/cub-200-folder-names.txt'
+latin_names_file = '../shared/latin_names.txt'
 
-used_models = ['google/vit-base-patch16-224-in21k', 'microsoft/resnet-34', 'microsoft/focalnet-tiny']
+data_source = 'cub-200'
+# data_source = 'botw'
+
+root_directory = '../botw_data/MEDIA/Images' if data_source == 'botw' else '../CUB_200_2011/images'
+
+# 'microsoft/resnet-34', 'microsoft/focalnet-tiny'
+used_models = ['google/vit-base-patch16-224-in21k']
 
 
 def readfile(path):
@@ -25,11 +29,13 @@ def readfile(path):
 
 
 def store_as_csv(embedding_dict, path):
-    columns = [f'Neuron_{x + 1}' for x in range(len(embedding_dict.values()[0]))]
+    embedding_dim = len(list(embedding_dict.values())[0])
+
+    columns = [f'Neuron_{x + 1}' for x in range(embedding_dim)]
     df = pd.DataFrame.from_dict(embedding_dict, orient='index', columns=columns)
 
     df.reset_index(inplace=True)
-    df.rename(columns={'index': 'Name (Latin)'}, inplace=True)
+    df.rename(columns={'index': 'species'}, inplace=True)
 
     df.to_csv(path, index=False)
 
@@ -41,7 +47,7 @@ def get_image_embeddings(image, model, preprocessor):
     return outputs.pooler_output.squeeze().detach().cpu().numpy()
 
 
-def get_mean_embeddings(model, preprocessor, root_dir, folder_names, save_names, normalize=False):
+def get_mean_embeddings(model, preprocessor, root_dir, folder_names, save_names):
     mean_embeddings = {}
 
     for folder, save_name in tzip(folder_names, save_names):
@@ -60,20 +66,17 @@ def get_mean_embeddings(model, preprocessor, root_dir, folder_names, save_names,
 
         mean_embedding = sum(class_embeddings) / len(class_embeddings)
 
-        if normalize:
-            mean_embedding /= np.linalg.norm(mean_embedding)
-
         mean_embeddings[save_name] = mean_embedding
 
     return mean_embeddings
 
 
-cub_200_names = readfile(cub_200_names_file)
 latin_names = readfile(latin_names_file)
+folder_names = readfile(latin_names) if data_source == 'botw' else readfile(cub_200_names_file)
 
 for model_name in used_models:
     proc = AutoImageProcessor.from_pretrained(model_name)
     mod = AutoModel.from_pretrained(model_name).to(device)
 
-    class_reps = get_mean_embeddings(mod, proc, root_directory, cub_200_names, latin_names)
-    store_as_csv(class_reps, f'class_embeddings [{model_name.replace("/", "_")}].csv')
+    class_reps = get_mean_embeddings(mod, proc, root_directory, folder_names, latin_names)
+    store_as_csv(class_reps, f'Image/{model_name.replace("/", "-").split("-")[1]}-{data_source}.csv')
