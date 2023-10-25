@@ -1,5 +1,6 @@
 import os
 
+
 def rename_files(folder_path, current_names, new_names, suffix):
     if len(current_names) != len(new_names):
         print("Error: The number of current and new item names must be the same.")
@@ -19,12 +20,10 @@ def rename_files(folder_path, current_names, new_names, suffix):
             print(f"File '{current_name}' not found in the folder.")
 
 
-
-with open('en_names.txt', 'r') as f:
+with open('../shared/en_names.txt', 'r') as f:
     current_names = f.read().splitlines()
 
-with open('latin_names.txt', 'r') as f:
+with open('../shared/latin_names.txt', 'r') as f:
     new_names = f.read().splitlines()
-
 
 rename_files('../xeno_canto_data/Recordings', current_names, new_names, '')

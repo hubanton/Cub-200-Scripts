@@ -3,6 +3,5 @@ xeno_canto_data/
 botw_data/
 CUB_200_2011/
 .idea/
-Embeddings/Image/
-Embeddings/Audio/
+Embeddings/*/
 ssh
