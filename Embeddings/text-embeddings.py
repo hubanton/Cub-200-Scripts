@@ -4,7 +4,7 @@ import pandas as pd
 import torch
 import transformers
 from tqdm.contrib import tzip
-from transformers import BertTokenizer, BertModel
+from transformers import BertTokenizer, BertModel, BigBirdModel, BigBirdTokenizer
 
 transformers.logging.set_verbosity_error()
 
@@ -12,11 +12,16 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 latin_names_file = '../shared/latin_names.txt'
 
-root_directory = '../botw_data/Sounds_and_Vocal_Behavior/BACKUP (v2)'
-# root_directory = '../botw_data/Sounds_and_Vocal_Behavior/Text_filtered'
+VERSION = 'v1'
 
-feature_extractor_model = 'bert-base-uncased'
+used_model = 'bert' # bert | bird
 
+root_directory = f'../botw_data/Sounds_and_Vocal_Behavior/{VERSION}'
+
+
+
+bird = "google/bigbird-roberta-base"
+bert = 'bert-base-uncased'
 
 def readfile(path, as_array=True):
     with open(path, 'r') as f:
@@ -37,7 +42,8 @@ def store_as_csv(embedding_dict, path):
 
 
 def get_text_embeddings(text, model, tokenizer):
-    tokenized_text = tokenizer(text, max_length=512, return_tensors='pt').to(device)
+    max_tokens = 512 if used_model == 'bert' else 2000
+    tokenized_text = tokenizer(text, max_length=max_tokens, return_tensors='pt').to(device)
 
     outputs = model(**tokenized_text)
 
@@ -57,8 +63,12 @@ def get_embeddings(model, tokenizer, root_dir, text_names, save_names):
 
 latin_names = readfile(latin_names_file)
 
-tokenizer = BertTokenizer.from_pretrained(feature_extractor_model)
-mod = BertModel.from_pretrained(feature_extractor_model).to(device)
+if used_model == 'bird':
+    tokenizer = BigBirdTokenizer.from_pretrained(bird)
+    mod = BigBirdModel.from_pretrained(bird).to(device)
+else:
+    tokenizer = BertTokenizer.from_pretrained(bert)
+    mod = BertModel.from_pretrained(bert).to(device)
 
 class_reps = get_embeddings(mod, tokenizer, root_directory, latin_names, latin_names)
-store_as_csv(class_reps, f'Text/{feature_extractor_model}-v2.csv')
+store_as_csv(class_reps, f'Text/{VERSION}_{used_model}.csv')
