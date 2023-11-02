@@ -19,7 +19,7 @@ MODEL_NAME = "MIT/ast-finetuned-audioset-10-10-0.4593"
 
 latin_names_file = '../shared/latin_names.txt'
 
-root_directory = '../xeno_canto_data/Recordings'
+ROOT_DIR = '../xeno_canto_data/Recordings'
 # root_directory = '../botw_data/MEDIA/Audios'
 
 target_directory = 'Audio/ast-embeddings-xeno-canto'
@@ -99,9 +99,9 @@ if model_type == 'ast':
     ast_model = AutoModelForAudioClassification.from_pretrained(MODEL_NAME, output_hidden_states=True).to(device)
     ast_feature_extractor = ASTFeatureExtractor.from_pretrained(MODEL_NAME)
 
-    results = get_audio_embeddings(ast_model, ast_feature_extractor, root_directory, latin_names, model_type)
+    results = get_audio_embeddings(ast_model, ast_feature_extractor, ROOT_DIR, latin_names, model_type)
 else:
     complete_model = get_aves_model().to(device)
-    results = get_audio_embeddings(complete_model, None, root_directory, latin_names, model_type)
+    results = get_audio_embeddings(complete_model, None, ROOT_DIR, latin_names, model_type)
 
 store_as_csv(results, f'{target_directory}-{model_type}.csv')
