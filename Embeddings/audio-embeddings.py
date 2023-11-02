@@ -54,8 +54,9 @@ def get_embedding(waveform, model, feature_extractor, model_type):
             output = model(input_values)
             return output['hidden_states'][-1].cpu().numpy()
 
-    output = model(torch.from_numpy(waveform).to(device))
-    return output.mean(dim=1).cpu().numpy()
+    with torch.no_grad():
+        output = model(torch.from_numpy(waveform).to(device))
+        return output.mean(dim=1).cpu().numpy()
 
 
 def get_audio_embeddings(model, feature_extractor, root_dir: str, folder_names, model_type='ast'):
