@@ -27,8 +27,8 @@ splits = []
 for i in range(num_splits):
     random.shuffle(class_list)
 
-    print(f"Fold {i + 1}:")
-    child_folder = os.path.join(ROOT_FOLDER, str(i + 1))
+    print(f"Fold {i}:")
+    child_folder = os.path.join(ROOT_FOLDER, str(i))
     os.makedirs(child_folder, exist_ok=True)
 
     total_len = len(class_list)
