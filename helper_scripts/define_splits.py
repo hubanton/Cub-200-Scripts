@@ -1,49 +1,72 @@
-import pandas as pd
-import numpy as np
 import os
-from sklearn.model_selection import StratifiedGroupKFold, train_test_split
+import random
+
+import pandas as pd
 
 file_path = "../Embeddings/Audio/ast-embeddings-botw.csv"
 
 df = pd.read_csv(file_path)
 
-num_rows = len(df)
-
 df['species'] = df['filename'].apply(lambda x: x.split('/')[0])
 
-groups = df['species'].to_numpy()
+class_list = list(df['species'].unique())
 
-X = np.ones((num_rows, 1))
+# Define the number of splits
+num_splits = 5
 
-
-sgkf = StratifiedGroupKFold(n_splits=5, random_state=42, shuffle=True)
+# Define the split ratios
+train_ratio = 0.75
+dev_ratio = 0.125
+test_ratio = 0.125
 
 ROOT_FOLDER = 'folds'
 os.makedirs(ROOT_FOLDER, exist_ok=True)
 
-for i, (train_index, test_index) in enumerate(sgkf.split(X, groups, groups)):
+splits = []
+
+for i in range(num_splits):
+    random.shuffle(class_list)
+
     print(f"Fold {i + 1}:")
     child_folder = os.path.join(ROOT_FOLDER, str(i + 1))
     os.makedirs(child_folder, exist_ok=True)
 
-    train_classes = np.unique(groups[train_index])
-    test_dev_classes = np.unique(groups[test_index])
+    total_len = len(class_list)
 
-    train_size = train_classes.shape[0]
-    test_dev_size = test_dev_classes.shape[0]
+    train_len = int(total_len * train_ratio)
+    test_len = int(total_len * test_ratio)
+    dev_len = int(total_len * dev_ratio)
 
-    test_dev_split = test_dev_size // 2
+    # Fetch train_len random classes from entire list
+    train_classes = class_list[:train_len]
 
-    print('Ratio of train to test: ', test_dev_size / train_size)
+    print(len(train_classes))
+    # Get remaining classes
+    test_dev_list = [c for c in class_list if c not in train_classes]
 
-    test_classes = test_dev_classes[:test_dev_split]
-    dev_classes = test_dev_classes[test_dev_split:]
+    print(test_dev_list)
+    # Get all classes not previously used for the test set
+    test_list = test_dev_list.copy()
+    if len(splits) != 0:
+        for split in splits:
+            test_list = [c for c in test_list if c not in split[2]]
+
+    test_classes = test_list[:test_len]
+
+    dev_list = test_dev_list.copy()
+    dev_list = [c for c in dev_list if c not in test_classes]
+    if len(splits) != 0:
+        for split in splits:
+            dev_list = [c for c in dev_list if c not in split[1]]
+
+    dev_classes = dev_list[:dev_len]
+
+    splits.append((train_classes, dev_classes, test_classes))
 
     TARGET_COLUMN = ['species']
-
     df_train = pd.DataFrame(train_classes, columns=TARGET_COLUMN)
-    df_test = pd.DataFrame(train_classes, columns=TARGET_COLUMN)
-    df_dev = pd.DataFrame(train_classes, columns=TARGET_COLUMN)
+    df_test = pd.DataFrame(test_classes, columns=TARGET_COLUMN)
+    df_dev = pd.DataFrame(dev_classes, columns=TARGET_COLUMN)
 
     df_train.to_csv(os.path.join(child_folder, 'train.csv'), index=False)
     df_test.to_csv(os.path.join(child_folder, 'test.csv'), index=False)
