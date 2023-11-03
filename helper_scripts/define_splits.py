@@ -19,7 +19,7 @@ train_ratio = 0.75
 dev_ratio = 0.125
 test_ratio = 0.125
 
-ROOT_FOLDER = 'folds'
+ROOT_FOLDER = 'cub-200'
 os.makedirs(ROOT_FOLDER, exist_ok=True)
 
 splits = []
