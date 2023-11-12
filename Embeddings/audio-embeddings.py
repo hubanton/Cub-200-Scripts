@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 import transformers
 from tqdm import tqdm
-from transformers import AutoModelForAudioClassification, ASTFeatureExtractor
+from transformers import AutoModelForAudioClassification, ASTFeatureExtractor, ClapModel, ClapFeatureExtractor
 
 from AvesModel import get_aves_model
 
@@ -13,19 +13,20 @@ transformers.logging.set_verbosity_error()
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-model_type = 'aves'
+model_type = 'clap'
 
-MODEL_NAME = "MIT/ast-finetuned-audioset-10-10-0.4593"
+ast = "MIT/ast-finetuned-audioset-10-10-0.4593"
+clap = 'laion/clap-htsat-unfused'
+
+ROOT_DIR = '../botw_data/MEDIA/'
 
 latin_names_file = '../shared/latin_names.txt'
 
-ROOT_DIR = '../xeno_canto_data/Recordings'
-# root_directory = '../botw_data/MEDIA/Audios'
+datasource = 'Audios'
 
-target_directory = 'Audio/ast-embeddings-xeno-canto'
+root_directory = ROOT_DIR + datasource
 
-
-# target_directory = 'Audio/ast-embeddings-botw'
+target_directory = 'botw'
 
 
 def readfile(path):
@@ -54,6 +55,13 @@ def get_embedding(waveform, model, feature_extractor, model_type):
             output = model(input_values)
             return output['hidden_states'][-1].cpu().numpy()
 
+    if model_type == 'clap':
+        inputs = feature_extractor(waveform, return_tensors="pt").to(device)
+
+        with torch.no_grad():
+            audio_features = model.get_audio_features(**inputs)
+            return audio_features.cpu().numpy()
+
     with torch.no_grad():
         output = model(torch.from_numpy(waveform).to(device))
         return output.mean(dim=1).cpu().numpy()
@@ -81,27 +89,35 @@ def get_audio_embeddings(model, feature_extractor, root_dir: str, folder_names, 
 
             waveform = audiofile.read(file_path, always_2d=True)[0]
             waveform = waveform.mean(0, keepdims=True)
+
             embedding = get_embedding(waveform, model, feature_extractor, model_type)
 
-            # np.save(target_file_path, embedding)
+            if model_type != 'clap':
+                embedding = embedding.mean(1)
 
-            averaged_embedding = embedding.mean(1).squeeze()
+            embedding = embedding.squeeze()
 
             file_key = os.path.join(folder_name, audio_filename)
-            embeddings_collection[file_key] = averaged_embedding
+            embeddings_collection[file_key] = embedding
 
     return embeddings_collection
 
 
-latin_names = readfile(latin_names_file)[:2]
+latin_names = readfile(latin_names_file)
 
 if model_type == 'ast':
-    ast_model = AutoModelForAudioClassification.from_pretrained(MODEL_NAME, output_hidden_states=True).to(device)
-    ast_feature_extractor = ASTFeatureExtractor.from_pretrained(MODEL_NAME)
+    ast_model = AutoModelForAudioClassification.from_pretrained(ast, output_hidden_states=True).to(device)
+    ast_feature_extractor = ASTFeatureExtractor.from_pretrained(ast)
 
-    results = get_audio_embeddings(ast_model, ast_feature_extractor, ROOT_DIR, latin_names, model_type)
+    results = get_audio_embeddings(ast_model, ast_feature_extractor, root_directory, latin_names, model_type)
+
+elif model_type == 'clap':
+    clap_model = ClapModel.from_pretrained(clap).to(device)
+    clap_extractor = ClapFeatureExtractor.from_pretrained(clap)
+
+    results = get_audio_embeddings(clap_model, clap_extractor, root_directory, latin_names, model_type)
 else:
     complete_model = get_aves_model().to(device)
-    results = get_audio_embeddings(complete_model, None, ROOT_DIR, latin_names, model_type)
+    results = get_audio_embeddings(complete_model, None, root_directory, latin_names, model_type)
 
 store_as_csv(results, f'{target_directory}-{model_type}.csv')

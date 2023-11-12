@@ -5,7 +5,7 @@ import torch
 import transformers
 from sentence_transformers import SentenceTransformer
 from tqdm.contrib import tzip
-from transformers import BertTokenizer, BertModel, BigBirdModel, BigBirdTokenizer
+from transformers import BertTokenizer, BertModel, BigBirdModel, BigBirdTokenizer, AutoTokenizer, ClapModel
 
 transformers.logging.set_verbosity_error()
 
@@ -15,13 +15,14 @@ latin_names_file = '../shared/latin_names.txt'
 
 VERSION = 'v3'
 
-used_model = 'sbert'  # bert | bird | sbert
+used_model = 'clap'  # bert | bird | sbert | clap
 
 root_directory = f'../botw_data/Sounds_and_Vocal_Behavior/{VERSION}'
 
 bird = 'google/bigbird-roberta-base'
 bert = 'bert-base-uncased'
 sbird = 'sentence-transformers/paraphrase-multilingual-mpnet-base-v2'
+clap = 'laion/clap-htsat-unfused'
 
 
 def readfile(path, as_array=True):
@@ -43,7 +44,10 @@ def store_as_csv(embedding_dict, path):
 
 
 def get_text_embeddings(text, model, tokenizer, used_model):
-    if used_model != 'sbert':
+    if used_model == 'sbert':
+        return model.encode(text)
+
+    if used_model in ('bird', 'bert'):
         max_tokens = 512 if used_model == 'bert' else 2000
         tokenized_text = tokenizer(text, max_length=max_tokens, return_tensors='pt').to(device)
 
@@ -51,7 +55,12 @@ def get_text_embeddings(text, model, tokenizer, used_model):
 
         return outputs.pooler_output.squeeze().detach().cpu().numpy()
 
-    return model.encode(text)
+    if used_model == 'clap':
+        inputs = tokenizer(text, padding=True, truncation=True, return_tensors="pt").to(device)
+
+        text_embeds = model.get_text_features(**inputs)
+
+        return text_embeds.squeeze().detach().cpu().numpy()
 
 
 def get_embeddings(model, tokenizer, root_dir, text_names, save_names, used_model):
@@ -73,6 +82,9 @@ if used_model == 'bird':
 elif used_model == 'bert':
     tokenizer = BertTokenizer.from_pretrained(bert)
     mod = BertModel.from_pretrained(bert).to(device)
+elif used_model == 'clap':
+    tokenizer = AutoTokenizer.from_pretrained(clap)
+    mod = ClapModel.from_pretrained(clap).to(device)
 else:
     tokenizer = None
     mod = SentenceTransformer(sbird)
