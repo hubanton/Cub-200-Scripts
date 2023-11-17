@@ -36,7 +36,7 @@ def load_text_from_directory(directory):
     return text
 
 
-for split in range(1, 5):
+for split in [4]:
     predictions = []
     labels = []
 
