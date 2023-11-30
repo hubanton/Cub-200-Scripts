@@ -65,6 +65,6 @@ average_metrics['Split'] = 'Average'
 all_metrics.append(average_metrics)
 
 # Convert metrics to a DataFrame and save to a CSV file
-output_file_name = 'CLAP_MODEL_XENO-CANTO_audio_metrics.csv'
+output_file_name = 'clap_results/CLAP_MODEL_XENO-CANTO_audio_metrics.csv'
 metrics_df = pd.DataFrame(all_metrics)
 metrics_df.to_csv(output_file_name, index=False)
