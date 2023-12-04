@@ -1,7 +1,9 @@
 import pandas as pd
 
+filename = 'cub_dna_barcodes'
+
 # Read the CSV file into a DataFrame
-df = pd.read_csv('../Embeddings/DNA/cub_dna_embeddings.csv')
+df = pd.read_csv(f'../Embeddings/DNA/{filename}.csv')
 
 # Load the original names
 with open('../shared/dna_names.txt', 'r') as file:
@@ -31,12 +33,9 @@ for i in range(len(og_names)):
 df['species'] = species_list
 
 # Save the updated DataFrame to a new CSV file
-df.to_csv('../Embeddings/DNA/cub_dna_embeddings_MAPPED_NAMES.csv', index=False)
+df.to_csv(f'../Embeddings/DNA/{filename}_MAPPED_NAMES.csv', index=False)
 
 new_list = set(df['species'].tolist())
 
 print('Birds with no recordings', set(new_names) - set(new_list))
 print('Birds that were not correctly mapped', set(new_list) - set(new_names))
-
-# Print a message indicating the save was successful
-print("Mapped names saved to cub_dna_embeddings_MAPPED_NAMES.csv")
